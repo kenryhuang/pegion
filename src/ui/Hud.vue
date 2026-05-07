@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import type { GameState } from '../game/state/GameState';
 
-defineProps<{ state: GameState }>();
+defineProps<{ state: GameState; stateVersion: number }>();
 
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -11,7 +11,7 @@ function formatTime(seconds: number): string {
 </script>
 
 <template>
-  <section class="hud">
+  <section class="hud" :data-state-version="stateVersion">
     <div class="hud-left">
       <div class="bar-label">HP {{ Math.ceil(state.player.hp) }} / {{ state.player.maxHp }}</div>
       <div class="meter"><span :style="{ width: `${(state.player.hp / state.player.maxHp) * 100}%` }" /></div>

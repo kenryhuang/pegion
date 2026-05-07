@@ -5,7 +5,7 @@ import { emitSkillSelection } from '../game/events/GameEvents';
 import type { GameState } from '../game/state/GameState';
 import { canUnlockSkill } from '../game/systems/SkillSystem';
 
-const props = defineProps<{ state: GameState }>();
+const props = defineProps<{ state: GameState; stateVersion: number }>();
 
 const branches = computed(() => {
   return ['office', 'kitchen', 'magnet', 'clone'].map((branch) => ({
@@ -16,7 +16,7 @@ const branches = computed(() => {
 </script>
 
 <template>
-  <section class="overlay-panel skill-tree">
+  <section class="overlay-panel skill-tree" :data-state-version="props.stateVersion">
     <header>
       <h2>Choose a Skill</h2>
       <span>{{ props.state.player.skillPoints }} point available</span>

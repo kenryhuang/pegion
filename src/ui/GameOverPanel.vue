@@ -2,11 +2,11 @@
 import { emitSimpleGameEvent } from '../game/events/GameEvents';
 import type { GameState } from '../game/state/GameState';
 
-defineProps<{ state: GameState; bestScore: number }>();
+defineProps<{ state: GameState; stateVersion: number; bestScore: number }>();
 </script>
 
 <template>
-  <section class="overlay-panel game-over">
+  <section class="overlay-panel game-over" :data-state-version="stateVersion">
     <h2>Run Over</h2>
     <dl>
       <div><dt>Time</dt><dd>{{ Math.floor(state.stats.survivalTime) }}s</dd></div>

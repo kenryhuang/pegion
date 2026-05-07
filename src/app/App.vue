@@ -13,11 +13,13 @@ import SkillTree from '../ui/SkillTree.vue';
 
 const gameHost = ref<HTMLElement | null>(null);
 const state = shallowRef<GameState | null>(null);
+const stateVersion = ref(0);
 const bestScore = ref(0);
 let game: Phaser.Game | null = null;
 
 function handleStateUpdate(event: CustomEvent<GameStateUpdatedDetail>): void {
   state.value = event.detail.state;
+  stateVersion.value += 1;
   triggerRef(state);
   if (event.detail.state.mode === 'gameOver') {
     bestScore.value = saveBestScore(event.detail.state.stats.score);
@@ -42,11 +44,11 @@ onBeforeUnmount(() => {
   <main class="app-shell">
     <section class="game-root">
       <div ref="gameHost" class="phaser-host" />
-      <Hud v-if="state && state.mode !== 'menu'" :state="state" />
+      <Hud v-if="state && state.mode !== 'menu'" :state="state" :state-version="stateVersion" />
       <MainMenu v-if="!state || state.mode === 'menu'" />
-      <SkillTree v-if="state?.mode === 'levelUp'" :state="state" />
+      <SkillTree v-if="state?.mode === 'levelUp'" :state="state" :state-version="stateVersion" />
       <PauseMenu v-if="state?.mode === 'paused'" />
-      <GameOverPanel v-if="state?.mode === 'gameOver'" :state="state" :best-score="bestScore" />
+      <GameOverPanel v-if="state?.mode === 'gameOver'" :state="state" :state-version="stateVersion" :best-score="bestScore" />
     </section>
   </main>
 </template>
