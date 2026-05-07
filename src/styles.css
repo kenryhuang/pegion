@@ -69,3 +69,159 @@ button {
   color: #1d1a14;
   cursor: pointer;
 }
+
+.overlay-panel {
+  position: absolute;
+  z-index: 10;
+  inset: 50%;
+  transform: translate(-50%, -50%);
+  width: min(920px, calc(100% - 32px));
+  max-height: calc(100% - 32px);
+  overflow: auto;
+  padding: 20px;
+  border: 2px solid #4f5a6f;
+  border-radius: 8px;
+  background: rgba(20, 25, 35, 0.94);
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.35);
+}
+
+.main-menu,
+.pause-menu,
+.game-over {
+  display: grid;
+  gap: 16px;
+  justify-items: start;
+}
+
+.hud {
+  position: absolute;
+  z-index: 6;
+  inset: 12px;
+  pointer-events: none;
+  display: grid;
+  grid-template-columns: 250px 1fr 180px;
+  align-items: start;
+  gap: 16px;
+}
+
+.hud-left,
+.hud-right,
+.dash-readout {
+  padding: 10px;
+  border: 1px solid rgba(246, 241, 220, 0.25);
+  border-radius: 6px;
+  background: rgba(17, 21, 31, 0.75);
+}
+
+.hud-right {
+  justify-self: end;
+  display: grid;
+  gap: 4px;
+  text-align: right;
+}
+
+.dash-readout {
+  justify-self: end;
+}
+
+.bar-label {
+  font-size: 13px;
+  margin-bottom: 4px;
+}
+
+.meter {
+  height: 10px;
+  margin-bottom: 8px;
+  background: #3a4158;
+  border-radius: 5px;
+  overflow: hidden;
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  background: #e85d75;
+}
+
+.meter.xp span {
+  background: #62d6f5;
+}
+
+.skill-tree header {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.skill-branches {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.skill-branch {
+  display: grid;
+  gap: 8px;
+}
+
+.skill-node {
+  min-height: 82px;
+  padding: 10px;
+  border: 1px solid #4f5a6f;
+  border-radius: 6px;
+  background: #222a38;
+  color: #f6f1dc;
+  text-align: left;
+  cursor: pointer;
+}
+
+.skill-node:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.skill-node.unlocked {
+  border-color: #62d6f5;
+  background: #183642;
+}
+
+.skill-node span {
+  display: block;
+  margin-top: 6px;
+  font-size: 12px;
+  line-height: 1.35;
+}
+
+.secondary-action {
+  min-height: 44px;
+  padding: 0 18px;
+  border: 1px solid #7b8498;
+  border-radius: 6px;
+  background: transparent;
+  color: #f6f1dc;
+  cursor: pointer;
+}
+
+.game-over dl {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+.game-over div {
+  padding: 10px;
+  border: 1px solid rgba(246, 241, 220, 0.18);
+  border-radius: 6px;
+}
+
+.game-over dt {
+  font-size: 12px;
+  color: #b8c0d6;
+}
+
+.game-over dd {
+  margin: 4px 0 0;
+  font-weight: 700;
+}
