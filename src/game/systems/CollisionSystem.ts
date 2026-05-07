@@ -45,7 +45,27 @@ function applyProjectileEnemyCollisions(state: GameState): void {
     }
   }
 
+  for (const projectile of state.projectiles) {
+    if (projectile.owner !== 'player' || projectile.lifeRemaining <= 0) {
+      continue;
+    }
+
+    for (const boss of state.bosses) {
+      if (!circlesOverlap(projectile, boss)) {
+        continue;
+      }
+      boss.hp -= projectile.damage;
+      projectile.lifeRemaining = 0;
+      if (boss.hp <= 0) {
+        state.stats.bossesDefeated += 1;
+        state.stats.score += 1000;
+      }
+      break;
+    }
+  }
+
   state.enemies = state.enemies.filter((enemy) => !deadEnemyIds.has(enemy.id));
+  state.bosses = state.bosses.filter((boss) => boss.hp > 0);
   state.projectiles = state.projectiles.filter((projectile) => projectile.lifeRemaining > 0);
 }
 

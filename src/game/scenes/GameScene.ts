@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import { emitGameState, gameEventNames, type SelectSkillDetail } from '../events/GameEvents';
 import { createGameState, type GameState } from '../state/GameState';
+import { spawnTimedEncounters, updateBosses } from '../systems/BossSystem';
 import { updateCombat } from '../systems/CombatSystem';
 import { applyCollisions } from '../systems/CollisionSystem';
 import { updateMovement } from '../systems/MovementSystem';
@@ -16,6 +17,8 @@ export class GameScene extends Phaser.Scene {
   private enemyLayer!: Phaser.GameObjects.Group;
   private projectileLayer!: Phaser.GameObjects.Group;
   private pickupLayer!: Phaser.GameObjects.Group;
+  private warningLayer!: Phaser.GameObjects.Group;
+  private bossLayer!: Phaser.GameObjects.Group;
 
   constructor() {
     super('GameScene');
@@ -29,6 +32,8 @@ export class GameScene extends Phaser.Scene {
     this.enemyLayer = this.add.group();
     this.projectileLayer = this.add.group();
     this.pickupLayer = this.add.group();
+    this.warningLayer = this.add.group();
+    this.bossLayer = this.add.group();
     this.cameras.main.startFollow(this.playerRect, true, 0.12, 0.12);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -51,6 +56,8 @@ export class GameScene extends Phaser.Scene {
       this.state.time += deltaSeconds;
       this.state.stats.survivalTime = this.state.time;
       updateStage(this.state);
+      spawnTimedEncounters(this.state);
+      updateBosses(this.state, deltaSeconds);
       updateMovement(this.state, deltaSeconds);
       updateSpawning(this.state);
       updateCombat(this.state, deltaSeconds);
@@ -107,8 +114,19 @@ export class GameScene extends Phaser.Scene {
     this.playerRect.setPosition(this.state.player.position.x, this.state.player.position.y);
     this.playerRect.setAlpha(this.state.player.invincibleRemaining > 0 ? 0.55 : 1);
     this.renderGroup(this.enemyLayer, this.state.enemies, 0xe85d75, 24);
+    this.renderGroup(this.bossLayer, this.state.bosses, 0xf08a4b, 58);
     this.renderGroup(this.projectileLayer, this.state.projectiles, 0xf6f1dc, 8);
     this.renderGroup(this.pickupLayer, this.state.pickups, 0x62d6f5, 10);
+    this.warningLayer.clear(true, true);
+    for (const boss of this.state.bosses) {
+      if (!boss.activeWarning) {
+        continue;
+      }
+      const warning = boss.activeWarning;
+      const circle = this.add.circle(warning.position.x, warning.position.y, warning.radius, 0xe85d75, 0.22);
+      circle.setStrokeStyle(3, 0xf6f1dc, 0.7);
+      this.warningLayer.add(circle);
+    }
   }
 
   private renderGroup(group: Phaser.GameObjects.Group, items: Array<{ position: { x: number; y: number }; id: string }>, color: number, size: number): void {
