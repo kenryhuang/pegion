@@ -1,8 +1,9 @@
 <script setup lang="ts">
 import Phaser from 'phaser';
-import { onBeforeUnmount, onMounted, ref, shallowRef } from 'vue';
+import { onBeforeUnmount, onMounted, ref, shallowRef, triggerRef } from 'vue';
 import { gameEventNames, type GameStateUpdatedDetail } from '../game/events/GameEvents';
 import { createPhaserGame } from '../game/main';
+import { getBestScore, saveBestScore } from '../game/storage/highScore';
 import type { GameState } from '../game/state/GameState';
 import GameOverPanel from '../ui/GameOverPanel.vue';
 import Hud from '../ui/Hud.vue';
@@ -17,10 +18,14 @@ let game: Phaser.Game | null = null;
 
 function handleStateUpdate(event: CustomEvent<GameStateUpdatedDetail>): void {
   state.value = event.detail.state;
+  triggerRef(state);
+  if (event.detail.state.mode === 'gameOver') {
+    bestScore.value = saveBestScore(event.detail.state.stats.score);
+  }
 }
 
 onMounted(() => {
-  bestScore.value = Number(localStorage.getItem('pas-best-score') ?? 0);
+  bestScore.value = getBestScore();
   window.addEventListener(gameEventNames.stateUpdated, handleStateUpdate as EventListener);
   if (gameHost.value) {
     game = createPhaserGame(gameHost.value);

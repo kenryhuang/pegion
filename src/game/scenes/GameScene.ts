@@ -44,6 +44,7 @@ export class GameScene extends Phaser.Scene {
     window.addEventListener(gameEventNames.resumeRun, this.handleResumeRun);
     window.addEventListener(gameEventNames.restartRun, this.handleStartRun);
     window.addEventListener(gameEventNames.selectSkill, this.handleSelectSkill as EventListener);
+    window.addEventListener('keydown', this.handleWindowKeyDown);
     this.events.once(Phaser.Scenes.Events.SHUTDOWN, this.removeWindowListeners, this);
     emitGameState(this.state);
   }
@@ -89,12 +90,24 @@ export class GameScene extends Phaser.Scene {
     unlockSkill(this.state, event.detail.skillId);
   };
 
+  private handleWindowKeyDown = (event: KeyboardEvent): void => {
+    if (event.key !== 'Escape') {
+      return;
+    }
+    if (this.state.mode === 'running') {
+      this.state.mode = 'paused';
+    } else if (this.state.mode === 'paused') {
+      this.state.mode = 'running';
+    }
+  };
+
   private removeWindowListeners(): void {
     window.removeEventListener(gameEventNames.startRun, this.handleStartRun);
     window.removeEventListener(gameEventNames.pauseRun, this.handlePauseRun);
     window.removeEventListener(gameEventNames.resumeRun, this.handleResumeRun);
     window.removeEventListener(gameEventNames.restartRun, this.handleStartRun);
     window.removeEventListener(gameEventNames.selectSkill, this.handleSelectSkill as EventListener);
+    window.removeEventListener('keydown', this.handleWindowKeyDown);
   }
 
   private readInput(): void {
@@ -105,9 +118,6 @@ export class GameScene extends Phaser.Scene {
     this.state.input.moveX = Number(right) - Number(left);
     this.state.input.moveY = Number(down) - Number(up);
     this.state.input.dashPressed = Phaser.Input.Keyboard.JustDown(this.wasd.SPACE);
-    if (Phaser.Input.Keyboard.JustDown(this.wasd.ESC)) {
-      this.state.mode = this.state.mode === 'paused' ? 'running' : 'paused';
-    }
   }
 
   private renderState(): void {

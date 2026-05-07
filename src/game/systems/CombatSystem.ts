@@ -1,6 +1,9 @@
+import type { Boss } from '../entities/Boss';
 import type { Enemy } from '../entities/Enemy';
 import type { GameState } from '../state/GameState';
 import { createEntityId } from '../state/GameState';
+
+type AttackTarget = Enemy | Boss;
 
 export function updateCombat(state: GameState, deltaSeconds: number): void {
   state.player.weapon.cooldownRemaining = Math.max(0, state.player.weapon.cooldownRemaining - deltaSeconds);
@@ -11,7 +14,7 @@ export function updateCombat(state: GameState, deltaSeconds: number): void {
 }
 
 export function fireAutoAttack(state: GameState): void {
-  const target = findNearestEnemy(state);
+  const target = findNearestTarget(state);
   if (!target) {
     return;
   }
@@ -50,13 +53,13 @@ export function updateProjectiles(state: GameState, deltaSeconds: number): void 
   state.projectiles = state.projectiles.filter((projectile) => projectile.lifeRemaining > 0);
 }
 
-function findNearestEnemy(state: GameState): Enemy | undefined {
-  let best: Enemy | undefined;
+function findNearestTarget(state: GameState): AttackTarget | undefined {
+  let best: AttackTarget | undefined;
   let bestDistance = Number.POSITIVE_INFINITY;
-  for (const enemy of state.enemies) {
-    const distance = Math.hypot(enemy.position.x - state.player.position.x, enemy.position.y - state.player.position.y);
+  for (const target of [...state.enemies, ...state.bosses]) {
+    const distance = Math.hypot(target.position.x - state.player.position.x, target.position.y - state.player.position.y);
     if (distance < bestDistance) {
-      best = enemy;
+      best = target;
       bestDistance = distance;
     }
   }
