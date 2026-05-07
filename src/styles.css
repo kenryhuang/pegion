@@ -46,3 +46,26 @@ button {
   color: #1d1a14;
   cursor: pointer;
 }
+
+.phaser-host {
+  position: absolute;
+  inset: 0;
+}
+
+.phaser-host canvas {
+  display: block;
+}
+
+.floating-start {
+  position: absolute;
+  top: 16px;
+  left: 16px;
+  z-index: 5;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 0;
+  border-radius: 6px;
+  background: #f6c453;
+  color: #1d1a14;
+  cursor: pointer;
+}
