@@ -1,0 +1,25 @@
+{
+  "name": "pixel-absurd-survivor",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "vite --host 127.0.0.1",
+    "build": "vue-tsc --noEmit && vite build",
+    "test": "vitest",
+    "test:run": "vitest --run"
+  },
+  "dependencies": {
+    "@vitejs/plugin-vue": "^5.2.3",
+    "phaser": "^3.90.0",
+    "vue": "^3.5.13"
+  },
+  "devDependencies": {
+    "@vue/test-utils": "^2.4.6",
+    "jsdom": "^25.0.1",
+    "typescript": "^5.8.2",
+    "vite": "^6.2.0",
+    "vitest": "^3.0.8",
+    "vue-tsc": "^2.2.8"
+  }
+}

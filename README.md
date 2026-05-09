@@ -128,3 +128,24 @@ Each branch has 6–8 nodes. You can typically complete one main line and dabble
 ## Full Design Document
 
 See [docs/superpowers/specs/2026-05-06-pixel-survivor-game-design.md](docs/superpowers/specs/2026-05-06-pixel-survivor-game-design.md) for the complete design spec (Chinese).
+
+## Verification
+
+Run the automated checks:
+
+```bash
+npm test -- --run
+npm run build
+```
+
+Manual MVP check:
+
+- Start a run from the main menu.
+- Move with WASD or arrow keys.
+- Dash with Space and verify the dash cooldown readout changes.
+- Let enemies spawn and verify auto-attacks create XP pickups.
+- Collect XP until level-up pauses the game and opens the skill tree.
+- Pick a skill and verify the run resumes.
+- Use Esc to pause and resume.
+- Advance or temporarily set time during development to verify the 3-minute elite and 6-minute boss events.
+- Take lethal damage and verify the game-over panel shows time, kills, level, branch, score, and best score.
