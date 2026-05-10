@@ -15,7 +15,7 @@ export interface EnemyDefinition {
 export const ENEMIES: Record<EnemyKind | EliteKind, EnemyDefinition> = {
   slow_mob: {
     id: 'slow_mob',
-    name: 'Slow Mob',
+    name: '慢吞吞小怪',
     hp: 22,
     speed: 82,
     damage: 9,
@@ -26,7 +26,7 @@ export const ENEMIES: Record<EnemyKind | EliteKind, EnemyDefinition> = {
   },
   fast_mob: {
     id: 'fast_mob',
-    name: 'Fast Mob',
+    name: '飞快小怪',
     hp: 12,
     speed: 145,
     damage: 8,
@@ -37,7 +37,7 @@ export const ENEMIES: Record<EnemyKind | EliteKind, EnemyDefinition> = {
   },
   tank_mob: {
     id: 'tank_mob',
-    name: 'Tank Mob',
+    name: '硬壳小怪',
     hp: 70,
     speed: 58,
     damage: 12,
@@ -48,7 +48,7 @@ export const ENEMIES: Record<EnemyKind | EliteKind, EnemyDefinition> = {
   },
   charge_elite: {
     id: 'charge_elite',
-    name: 'Charge Elite',
+    name: '冲锋精英',
     hp: 240,
     speed: 90,
     damage: 24,
@@ -59,7 +59,7 @@ export const ENEMIES: Record<EnemyKind | EliteKind, EnemyDefinition> = {
   },
   projectile_elite: {
     id: 'projectile_elite',
-    name: 'Projectile Elite',
+    name: '弹幕精英',
     hp: 210,
     speed: 72,
     damage: 22,

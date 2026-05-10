@@ -20,7 +20,7 @@ export interface BossDefinition {
 export const BOSSES: Record<BossKind, BossDefinition> = {
   printer_boss: {
     id: 'printer_boss',
-    name: 'The Printer',
+    name: '打印机大王',
     hp: 1200,
     speed: 56,
     radius: 34,
@@ -32,7 +32,7 @@ export const BOSSES: Record<BossKind, BossDefinition> = {
   },
   microwave_boss: {
     id: 'microwave_boss',
-    name: 'The Microwave',
+    name: '微波炉魔王',
     hp: 1400,
     speed: 50,
     radius: 36,
