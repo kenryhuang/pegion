@@ -10,4 +10,7 @@ export interface Projectile {
   pierceRemaining: number;
   lifeRemaining: number;
   hitEnemyIds: Set<string>;
+  isCritical: boolean;
+  bounceRemaining?: number;
+  bounceChance?: number;
 }

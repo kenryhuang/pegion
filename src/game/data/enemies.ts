@@ -68,4 +68,15 @@ export const ENEMIES: Record<EnemyKind | EliteKind, EnemyDefinition> = {
     weight: 1,
     isElite: true,
   },
+  black_elite: {
+    id: 'black_elite',
+    name: '黑色精英',
+    hp: 90,
+    speed: 185,
+    damage: 18,
+    xpValue: 48,
+    radius: 18,
+    weight: 1,
+    isElite: true,
+  },
 };

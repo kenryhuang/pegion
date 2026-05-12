@@ -17,6 +17,7 @@ export interface Boss {
 
 export interface BossWarning {
   id: string;
+  skillId?: string;
   kind: 'line' | 'circle' | 'ring';
   position: Vector2;
   direction: Vector2;

@@ -174,6 +174,38 @@ button {
   gap: 16px;
 }
 
+.boss-health {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: min(680px, 58vw);
+  padding: 8px 12px;
+  border: 2px solid rgba(246, 241, 220, 0.42);
+  border-radius: 6px;
+  background: rgba(17, 21, 31, 0.82);
+}
+
+.boss-health-label {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 6px;
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.boss-health-meter {
+  height: 18px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #2b1017;
+}
+
+.boss-health-meter span {
+  display: block;
+  height: 100%;
+  background: #e4263f;
+}
+
 .skill-tree {
   width: calc(100% - 16px);
   height: calc(100% - 16px);

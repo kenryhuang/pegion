@@ -1,8 +1,16 @@
 <script setup lang="ts">
+import { computed } from 'vue';
+import { BOSSES } from '../game/data/bosses';
 import { stageLabels } from '../game/data/labels';
 import type { GameState } from '../game/state/GameState';
 
-defineProps<{ state: GameState; stateVersion: number }>();
+const props = defineProps<{ state: GameState; stateVersion: number }>();
+
+const activeBoss = computed(() => props.state.bosses[0]);
+const activeBossPercent = computed(() => {
+  const boss = activeBoss.value;
+  return boss ? Math.max(0, Math.min(100, (boss.hp / boss.maxHp) * 100)) : 0;
+});
 
 function formatTime(seconds: number): string {
   const minutes = Math.floor(seconds / 60);
@@ -13,6 +21,15 @@ function formatTime(seconds: number): string {
 
 <template>
   <section class="hud" :data-state-version="stateVersion">
+    <div v-if="activeBoss" class="boss-health">
+      <div class="boss-health-label">
+        <strong>{{ BOSSES[activeBoss.kind]?.name ?? activeBoss.kind }}</strong>
+        <span>{{ Math.ceil(activeBoss.hp) }} / {{ activeBoss.maxHp }}</span>
+      </div>
+      <div class="boss-health-meter">
+        <span :style="{ width: `${activeBossPercent}%` }" />
+      </div>
+    </div>
     <div class="hud-left">
       <div class="bar-label">生命 {{ Math.ceil(state.player.hp) }} / {{ state.player.maxHp }}</div>
       <div class="meter"><span :style="{ width: `${(state.player.hp / state.player.maxHp) * 100}%` }" /></div>

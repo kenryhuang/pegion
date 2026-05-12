@@ -45,6 +45,7 @@ describe('simulation systems', () => {
       pierceRemaining: 0,
       lifeRemaining: 1,
       hitEnemyIds: new Set<string>(),
+      isCritical: false,
     });
 
     applyCollisions(state);

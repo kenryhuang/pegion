@@ -33,7 +33,7 @@ describe('core run flow', () => {
     spawnTimedEncounters(state);
     expect(state.enemies.some((enemy) => enemy.isElite)).toBe(true);
 
-    state.time = 360;
+    state.player.level = 10;
     spawnTimedEncounters(state);
     updateBosses(state, 10);
     expect(state.bosses.length).toBeGreaterThan(0);
@@ -50,7 +50,7 @@ describe('core run flow', () => {
   it('auto-fires at bosses when no smaller enemies are available', () => {
     const state = createGameState('boss-target');
     state.mode = 'running';
-    state.time = 360;
+    state.player.level = 10;
     spawnTimedEncounters(state);
     state.enemies = [];
     state.bosses[0].position = { x: 100, y: 0 };

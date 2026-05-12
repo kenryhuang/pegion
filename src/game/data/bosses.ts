@@ -18,6 +18,28 @@ export interface BossDefinition {
 }
 
 export const BOSSES: Record<BossKind, BossDefinition> = {
+  chef_boss: {
+    id: 'chef_boss',
+    name: '厨师',
+    hp: 3200,
+    speed: 32,
+    radius: 44,
+    skills: [
+      { id: 'chef_fireball', warningSeconds: 0.7, cooldown: 4, damage: 22, radius: 64 },
+      { id: 'chef_leap', warningSeconds: 1.1, cooldown: 6, damage: 55, radius: 96 },
+    ],
+  },
+  clown_boss: {
+    id: 'clown_boss',
+    name: '小丑',
+    hp: 1500,
+    speed: 86,
+    radius: 34,
+    skills: [
+      { id: 'clown_dash', warningSeconds: 0.65, cooldown: 3.8, damage: 34, radius: 42 },
+      { id: 'clown_dart', warningSeconds: 0.55, cooldown: 3.2, damage: 24, radius: 18 },
+    ],
+  },
   printer_boss: {
     id: 'printer_boss',
     name: '打印机大王',

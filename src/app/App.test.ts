@@ -27,4 +27,30 @@ describe('App HUD updates', () => {
 
     expect(wrapper.text()).toContain('生命 91 / 100');
   });
+
+  it('shows a top boss health bar with exact values while a boss is active', async () => {
+    const wrapper = mount(App);
+    const state = createGameState('boss-hud');
+    state.mode = 'running';
+    state.bosses.push({
+      id: 'boss-1',
+      kind: 'clown_boss',
+      position: { x: 0, y: 0 },
+      velocity: { x: 0, y: 0 },
+      body: { radius: 34 },
+      hp: 1500,
+      maxHp: 1500,
+      speed: 86,
+      damageMultiplier: 1,
+      phase: 1,
+      skillCooldownRemaining: 1,
+      activeWarning: null,
+    });
+
+    window.dispatchEvent(new CustomEvent<GameStateUpdatedDetail>(gameEventNames.stateUpdated, { detail: { state } }));
+    await wrapper.vm.$nextTick();
+
+    expect(wrapper.find('.boss-health').exists()).toBe(true);
+    expect(wrapper.text()).toContain('1500 / 1500');
+  });
 });

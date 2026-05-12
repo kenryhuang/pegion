@@ -2,12 +2,15 @@ import Phaser from 'phaser';
 import { emitGameState, gameEventNames, type SelectSkillDetail } from '../events/GameEvents';
 import { createGameState, type GameState } from '../state/GameState';
 import { spawnTimedEncounters, updateBosses } from '../systems/BossSystem';
+import { updateClones } from '../systems/CloneSystem';
 import { updateCombat } from '../systems/CombatSystem';
 import { applyCollisions } from '../systems/CollisionSystem';
 import { updateMovement } from '../systems/MovementSystem';
 import { updateSpawning } from '../systems/SpawnSystem';
+import { updateSkillEffects } from '../systems/SkillEffectSystem';
 import { updateStage } from '../systems/StageSystem';
 import { unlockSkill } from '../systems/SkillSystem';
+import { updateVisualEffects } from '../systems/VisualEffectSystem';
 
 export class GameScene extends Phaser.Scene {
   private state: GameState = createGameState('initial');
@@ -19,6 +22,8 @@ export class GameScene extends Phaser.Scene {
   private pickupLayer!: Phaser.GameObjects.Group;
   private warningLayer!: Phaser.GameObjects.Group;
   private bossLayer!: Phaser.GameObjects.Group;
+  private cloneLayer!: Phaser.GameObjects.Group;
+  private visualEffectLayer!: Phaser.GameObjects.Group;
 
   constructor() {
     super('GameScene');
@@ -34,6 +39,8 @@ export class GameScene extends Phaser.Scene {
     this.pickupLayer = this.add.group();
     this.warningLayer = this.add.group();
     this.bossLayer = this.add.group();
+    this.cloneLayer = this.add.group();
+    this.visualEffectLayer = this.add.group();
     this.cameras.main.startFollow(this.playerRect, true, 0.12, 0.12);
 
     this.cursors = this.input.keyboard!.createCursorKeys();
@@ -61,8 +68,11 @@ export class GameScene extends Phaser.Scene {
       updateBosses(this.state, deltaSeconds);
       updateMovement(this.state, deltaSeconds);
       updateSpawning(this.state);
+      updateClones(this.state, deltaSeconds);
+      updateSkillEffects(this.state, deltaSeconds);
       updateCombat(this.state, deltaSeconds);
       applyCollisions(this.state);
+      updateVisualEffects(this.state, deltaSeconds);
     }
 
     this.renderState();
@@ -123,19 +133,28 @@ export class GameScene extends Phaser.Scene {
   private renderState(): void {
     this.playerRect.setPosition(this.state.player.position.x, this.state.player.position.y);
     this.playerRect.setAlpha(this.state.player.invincibleRemaining > 0 ? 0.55 : 1);
-    this.renderGroup(this.enemyLayer, this.state.enemies, 0xe85d75, 24);
-    this.renderGroup(this.bossLayer, this.state.bosses, 0xf08a4b, 58);
-    this.renderGroup(this.projectileLayer, this.state.projectiles, 0xf6f1dc, 8);
+    this.renderEnemies();
+    this.renderBosses();
+    this.renderGroup(this.cloneLayer, this.state.clones, 0x74f2ce, 22);
+    this.renderProjectiles();
     this.renderGroup(this.pickupLayer, this.state.pickups, 0x62d6f5, 10);
+    this.renderVisualEffects();
+    this.renderSkillAreas();
     this.warningLayer.clear(true, true);
     for (const boss of this.state.bosses) {
       if (!boss.activeWarning) {
         continue;
       }
       const warning = boss.activeWarning;
-      const circle = this.add.circle(warning.position.x, warning.position.y, warning.radius, 0xe85d75, 0.22);
-      circle.setStrokeStyle(3, 0xf6f1dc, 0.7);
-      this.warningLayer.add(circle);
+      if (warning.kind === 'line') {
+        const line = this.add.line(0, 0, boss.position.x, boss.position.y, warning.position.x, warning.position.y, 0xe85d75, 0.55);
+        line.setLineWidth(Math.max(10, warning.width));
+        this.warningLayer.add(line);
+      } else {
+        const circle = this.add.circle(warning.position.x, warning.position.y, warning.radius, 0xe85d75, 0.22);
+        circle.setStrokeStyle(3, 0xf6f1dc, 0.7);
+        this.warningLayer.add(circle);
+      }
     }
   }
 
@@ -144,6 +163,136 @@ export class GameScene extends Phaser.Scene {
     for (const item of items) {
       group.add(this.add.rectangle(item.position.x, item.position.y, size, size, color));
     }
+  }
+
+  private renderEnemies(): void {
+    this.enemyLayer.clear(true, true);
+    for (const enemy of this.state.enemies) {
+      const color = enemy.kind === 'black_elite' ? 0x050505 : enemy.isElite ? 0x5b1b1b : 0xe85d75;
+      const size = enemy.kind === 'black_elite' ? 26 : enemy.isElite ? 30 : 24;
+      const rect = this.add.rectangle(enemy.position.x, enemy.position.y, size, size, color);
+      if (enemy.kind === 'black_elite') {
+        rect.setStrokeStyle(2, 0xf6f1dc, 0.8);
+      }
+      this.enemyLayer.add(rect);
+    }
+  }
+
+  private renderBosses(): void {
+    this.bossLayer.clear(true, true);
+    for (const boss of this.state.bosses) {
+      const color = boss.kind === 'chef_boss' ? 0xd94f24 : boss.kind === 'clown_boss' ? 0xf6f1dc : 0xf08a4b;
+      const size = boss.kind === 'chef_boss' ? 72 : boss.kind === 'clown_boss' ? 62 : 58;
+      this.bossLayer.add(this.add.rectangle(boss.position.x, boss.position.y, size, size, color));
+    }
+  }
+
+  private renderProjectiles(): void {
+    this.projectileLayer.clear(true, true);
+    for (const projectile of this.state.projectiles) {
+      const color = projectile.owner === 'boss' ? 0xff4fd8 : 0xf6f1dc;
+      const size = projectile.owner === 'boss' ? 12 : 8;
+      this.projectileLayer.add(this.add.rectangle(projectile.position.x, projectile.position.y, size, size, color));
+    }
+  }
+
+  private renderVisualEffects(): void {
+    this.visualEffectLayer.clear(true, true);
+    for (const effect of this.state.visualEffects) {
+      const progress = Math.max(0, effect.lifeRemaining / effect.maxLife);
+      if (effect.kind === 'damage_text' || effect.kind === 'player_damage_text') {
+        const isPlayerDamage = effect.kind === 'player_damage_text';
+        const text = this.add.text(effect.position.x, effect.position.y, String(effect.value), {
+          fontFamily: 'Arial',
+          fontSize: effect.isCritical || isPlayerDamage ? '34px' : '23px',
+          fontStyle: effect.isCritical || isPlayerDamage ? 'bold' : 'normal',
+          color: isPlayerDamage ? '#ff6b6b' : effect.isCritical ? '#ffd966' : '#f6f1dc',
+          stroke: '#141923',
+          strokeThickness: effect.isCritical || isPlayerDamage ? 5 : 3,
+        });
+        text.setOrigin(0.5);
+        text.setAlpha(progress);
+        this.visualEffectLayer.add(text);
+      } else if (effect.kind === 'spark') {
+        const spark = this.add.star(effect.position.x, effect.position.y, 6, 5, 20, 0xfff08a, progress);
+        spark.setAngle(this.state.time * 720);
+        this.visualEffectLayer.add(spark);
+      } else if (effect.kind === 'fire_pit') {
+        const radius = effect.radius ?? 30;
+        const pulse = 1 + Math.sin(this.state.time * 16 + effect.position.x * 0.03) * 0.12;
+        const ember = this.add.circle(effect.position.x, effect.position.y, radius * pulse, 0xff5a1f, 0.28 * progress);
+        const core = this.add.circle(effect.position.x, effect.position.y, radius * 0.55 * pulse, 0xffd166, 0.36 * progress);
+        const flameA = this.add.triangle(effect.position.x - radius * 0.28, effect.position.y - 4, 0, 18, 9, -14, 18, 18, 0xff7a1a, 0.55 * progress);
+        const flameB = this.add.triangle(effect.position.x + radius * 0.18, effect.position.y - 2, 0, 16, 8, -18, 16, 16, 0xffe08a, 0.5 * progress);
+        ember.setScale(1, 0.45);
+        core.setScale(1, 0.38);
+        flameA.setAngle(-10 + Math.sin(this.state.time * 18) * 8);
+        flameB.setAngle(12 + Math.cos(this.state.time * 17) * 8);
+        this.visualEffectLayer.addMultiple([ember, core, flameA, flameB]);
+      } else if (effect.kind === 'burst_ring') {
+        const radius = (effect.radius ?? 18) + (1 - progress) * 110;
+        const ring = this.add.circle(effect.position.x, effect.position.y, radius, 0xffffff, 0);
+        ring.setStrokeStyle(5, 0xffd966, 0.75 * progress);
+        this.visualEffectLayer.add(ring);
+      } else if (effect.kind === 'microwave_blast') {
+        const radius = (effect.radius ?? 120) * (1.04 - progress * 0.04);
+        const outer = this.add.circle(effect.position.x, effect.position.y, radius, 0xffd166, 0.1 * progress);
+        const ringA = this.add.circle(effect.position.x, effect.position.y, radius, 0xffffff, 0);
+        const ringB = this.add.circle(effect.position.x, effect.position.y, radius * 0.62, 0xffffff, 0);
+        ringA.setStrokeStyle(8, 0xffd166, 0.85 * progress);
+        ringB.setStrokeStyle(4, 0xff7a1a, 0.7 * progress);
+        this.visualEffectLayer.addMultiple([outer, ringA, ringB]);
+      } else if (effect.kind === 'pan_bounce') {
+        const target = effect.targetPosition ?? effect.position;
+        const line = this.add.line(0, 0, effect.position.x, effect.position.y, target.x, target.y, 0xfff08a, 0.82 * progress);
+        const ring = this.add.circle(effect.position.x, effect.position.y, (effect.radius ?? 18) + (1 - progress) * 22, 0xffffff, 0);
+        line.setLineWidth(5);
+        ring.setStrokeStyle(4, 0xfff08a, 0.8 * progress);
+        this.visualEffectLayer.addMultiple([line, ring]);
+      } else if (effect.kind === 'ice_wall') {
+        const height = effect.radius ?? 54;
+        const wall = this.add.rectangle(effect.position.x, effect.position.y, 18, height, 0x9fe8ff, 0.68 * progress);
+        const edge = this.add.rectangle(effect.position.x, effect.position.y, 26, height + 10, 0xffffff, 0);
+        const crackA = this.add.line(effect.position.x, effect.position.y, -4, -height * 0.32, 5, -height * 0.02, 0xffffff, 0.8 * progress);
+        const crackB = this.add.line(effect.position.x, effect.position.y, 4, height * 0.04, -5, height * 0.34, 0xd8f8ff, 0.75 * progress);
+        const angle = Phaser.Math.RadToDeg(effect.angle ?? 0);
+        wall.setAngle(angle);
+        edge.setAngle(angle);
+        edge.setStrokeStyle(3, 0xd8f8ff, 0.9 * progress);
+        crackA.setAngle(angle);
+        crackB.setAngle(angle);
+        this.visualEffectLayer.addMultiple([edge, wall, crackA, crackB]);
+      } else if (effect.kind === 'boss_slam') {
+        const radius = (effect.radius ?? 96) * (1.08 - progress * 0.08);
+        const ground = this.add.circle(effect.position.x, effect.position.y, radius, 0xff5a1f, 0.16 * progress);
+        const ringA = this.add.circle(effect.position.x, effect.position.y, radius, 0xffffff, 0);
+        const ringB = this.add.circle(effect.position.x, effect.position.y, radius * 0.46, 0xffffff, 0);
+        ringA.setStrokeStyle(10, 0xffd166, 0.9 * progress);
+        ringB.setStrokeStyle(5, 0xff5a1f, 0.75 * progress);
+        this.visualEffectLayer.addMultiple([ground, ringA, ringB]);
+      } else if (effect.kind === 'clown_dash') {
+        const target = effect.targetPosition ?? effect.position;
+        const line = this.add.line(0, 0, effect.position.x, effect.position.y, target.x, target.y, 0xff4fd8, 0.88 * progress);
+        const ring = this.add.circle(target.x, target.y, (effect.radius ?? 34) + (1 - progress) * 34, 0xffffff, 0);
+        line.setLineWidth(9);
+        ring.setStrokeStyle(5, 0xff4fd8, 0.8 * progress);
+        this.visualEffectLayer.addMultiple([line, ring]);
+      } else {
+        const radius = (effect.radius ?? 24) + (1 - progress) * 42;
+        const flash = this.add.circle(effect.position.x, effect.position.y, radius, 0x74f2ce, 0.2 * progress);
+        flash.setStrokeStyle(3, 0x74f2ce, 0.8 * progress);
+        this.visualEffectLayer.add(flash);
+      }
+    }
+  }
+
+  private renderSkillAreas(): void {
+    if (this.state.skillState.auraRadius <= 0) {
+      return;
+    }
+    const aura = this.add.circle(this.state.player.position.x, this.state.player.position.y, this.state.skillState.auraRadius, 0x74f2ce, 0.09);
+    aura.setStrokeStyle(2, 0x74f2ce, 0.5);
+    this.visualEffectLayer.add(aura);
   }
 
   private drawGround(): void {

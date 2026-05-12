@@ -3,18 +3,22 @@ import type { Boss, BossWarning } from '../entities/Boss';
 import type { GameState } from '../state/GameState';
 import { createEntityId } from '../state/GameState';
 import type { BossKind, Vector2 } from '../types';
+import { applyPlayerDamage } from './PlayerDamageSystem';
 import { spawnEnemy } from './SpawnSystem';
+import { addBossSlam, addClownDash, addFirePit } from './VisualEffectSystem';
 
 export function spawnTimedEncounters(state: GameState): void {
   const wholeSecond = Math.floor(state.time);
   if (wholeSecond >= 180 && wholeSecond % 180 === 0 && !state.enemies.some((enemy) => enemy.isElite && enemy.id.includes(String(wholeSecond)))) {
-    const kind = wholeSecond % 360 === 0 ? 'projectile_elite' : 'charge_elite';
+    const kind = wholeSecond % 540 === 0 ? 'black_elite' : wholeSecond % 360 === 0 ? 'projectile_elite' : 'charge_elite';
     const elite = spawnEnemy(state, kind, offsetFromPlayer(state, 360));
     elite.id = `${elite.id}-${wholeSecond}`;
   }
 
-  if (wholeSecond >= 360 && wholeSecond % 360 === 0 && !state.bosses.some((boss) => boss.id.includes(String(wholeSecond)))) {
-    spawnBoss(state, wholeSecond % 720 === 0 ? 'microwave_boss' : 'printer_boss', wholeSecond);
+  const bossLevel = Math.floor(state.player.level / 10) * 10;
+  if ((bossLevel === 10 || bossLevel === 20) && !state.spawnedBossLevels.has(bossLevel)) {
+    state.spawnedBossLevels.add(bossLevel);
+    spawnBoss(state, getBossKindForLevel(bossLevel), bossLevel);
   }
 }
 
@@ -36,7 +40,7 @@ export function updateBosses(state: GameState, deltaSeconds: number): void {
     if (boss.activeWarning) {
       boss.activeWarning.remaining -= deltaSeconds;
       if (boss.activeWarning.remaining <= 0) {
-        resolveWarningDamage(state, boss.activeWarning);
+        resolveWarningDamage(state, boss, boss.activeWarning);
         boss.activeWarning = null;
       }
       continue;
@@ -79,8 +83,9 @@ function createWarning(state: GameState, boss: Boss): BossWarning {
 
   return {
     id: createEntityId(state, 'warning'),
+    skillId: skill.id,
     kind: skill.id.includes('line') ? 'line' : skill.id.includes('ring') ? 'ring' : 'circle',
-    position: { ...state.player.position },
+    position: getWarningPosition(state, boss, skill.id),
     direction: { x: dx / distance, y: dy / distance },
     radius: skill.radius,
     width: skill.radius,
@@ -89,19 +94,81 @@ function createWarning(state: GameState, boss: Boss): BossWarning {
   };
 }
 
-function resolveWarningDamage(state: GameState, warning: BossWarning): void {
-  if (state.player.invincibleRemaining > 0) {
+function resolveWarningDamage(state: GameState, boss: Boss, warning: BossWarning): void {
+  if (warning.skillId === 'chef_fireball') {
+    addFirePit(state, warning.position, 3.5, warning.radius);
+  }
+  if (warning.skillId === 'chef_leap') {
+    boss.position = { ...warning.position };
+    boss.velocity = { x: 0, y: 0 };
+    addBossSlam(state, warning.position, warning.radius);
+  }
+  if (warning.skillId === 'clown_dash') {
+    const startPosition = { ...boss.position };
+    boss.position = { ...warning.position };
+    boss.velocity = { x: 0, y: 0 };
+    addClownDash(state, startPosition, warning.position);
+  }
+  if (warning.skillId === 'clown_dart') {
+    fireClownDart(state, boss, warning);
     return;
   }
 
   const distance = Math.hypot(state.player.position.x - warning.position.x, state.player.position.y - warning.position.y);
   if (distance <= warning.radius + state.player.body.radius) {
-    state.player.hp = Math.max(0, state.player.hp - warning.damage);
-    state.player.invincibleRemaining = 0.6;
-    if (state.player.hp === 0) {
-      state.mode = 'gameOver';
-    }
+    applyPlayerDamage(state, warning.damage, warning.position);
   }
+}
+
+function getWarningPosition(state: GameState, boss: Boss, skillId: string): Vector2 {
+  if (skillId === 'chef_leap') {
+    const angle = state.rng.range(0, Math.PI * 2);
+    const distance = state.rng.range(12, 48);
+    return {
+      x: state.player.position.x + Math.cos(angle) * distance,
+      y: state.player.position.y + Math.sin(angle) * distance,
+    };
+  }
+  if (skillId === 'chef_fireball') {
+    const angle = state.rng.range(0, Math.PI * 2);
+    const distance = state.rng.range(0, 90);
+    return {
+      x: state.player.position.x + Math.cos(angle) * distance,
+      y: state.player.position.y + Math.sin(angle) * distance,
+    };
+  }
+  if (skillId === 'clown_dash' || skillId === 'clown_dart') {
+    return { ...state.player.position };
+  }
+  return { ...state.player.position };
+}
+
+function getBossKindForLevel(level: number): BossKind {
+  if (level === 10) {
+    return 'chef_boss';
+  }
+  return 'clown_boss';
+}
+
+function fireClownDart(state: GameState, boss: Boss, warning: BossWarning): void {
+  const dx = warning.position.x - boss.position.x;
+  const dy = warning.position.y - boss.position.y;
+  const distance = Math.max(1, Math.hypot(dx, dy));
+  state.projectiles.push({
+    id: createEntityId(state, 'clown-dart'),
+    owner: 'boss',
+    position: { ...boss.position },
+    velocity: {
+      x: (dx / distance) * 420,
+      y: (dy / distance) * 420,
+    },
+    body: { radius: 7 },
+    damage: warning.damage,
+    pierceRemaining: 0,
+    lifeRemaining: 1.6,
+    hitEnemyIds: new Set<string>(),
+    isCritical: false,
+  });
 }
 
 function offsetFromPlayer(state: GameState, distance: number): Vector2 {
